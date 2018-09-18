@@ -1,0 +1,21 @@
+{
+    "name": "raspiplayer",
+    "version": "0.0.1",
+    "description": "Raspberry Pi Music Player",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "node index.js",
+        "watch": "nodemon index.js"
+    },
+    "author": "Jarmo Lahtinen",
+    "license": "ISC",
+    "dependencies": {
+        "body-parser": "^1.18.3",
+        "express": "^4.16.3",
+        "fs": "0.0.1-security"
+    },
+    "devDependencies": {
+        "nodemon": "^1.18.4"
+    }
+}

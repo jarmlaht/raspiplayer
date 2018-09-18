@@ -1,0 +1,34 @@
+
+POST http://localhost:3001/albums
+content-type: application/json
+
+{
+"id": 4,
+"band": {
+    "id": 3,
+    "name": "Yes",
+},
+"albumname": "Keys To Ascension (Disc 1)",
+"songs": [
+{
+"id": 1,
+"filename": "01-Siberian Khatru.flac"
+},
+{
+"id": 2,
+"filename": "02-The Revealing Science Of God.flac"
+},
+{
+"id": 3,
+"filename": "03-America.flac"
+},
+{
+"id": 4,
+"filename": "04-Onward.flac"
+},
+{
+"id": 5,
+"filename": "05-Awaken.flac"
+}
+]
+}
