@@ -102,6 +102,7 @@ app.get('/', (request, response) => {
     response.send('<h1>Hello World!</h1>')
 })
 
+/* ROUTES FOR THE NETWORK DRIVE */
 // Returns the band names (folder names) in array as response
 app.get('/bandfolders', (request, response) => {
     fs.readdir('\\\\192.168.1.5\\share\\FLAC\\', { 'withFileTypes': true }, (error, files) => {
@@ -130,6 +131,7 @@ app.get('/bandfolders/:bandId', (request, response) => {
     } else return response.status(400).json({ error: 'Band with given id not found!' })
 })
 
+/* ROUTES FOR THE LOCAL ALBUM ARRAY */
 // Returns all the album data in JSON format as response
 app.get('/albums', (request, response) => {
     response.json(albums)
@@ -194,7 +196,7 @@ app.post('/albums', (request, response) => {
 
     const album = {
         id: body.id,
-        bandname: body.bandname,
+        band: { id: body.band.id, name: body.band.name },
         albumname: body.albumname,
         songs: body.songs
     }

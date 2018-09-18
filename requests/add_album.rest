@@ -6,7 +6,7 @@ content-type: application/json
 "id": 4,
 "band": {
     "id": 3,
-    "name": "Yes",
+    "name": "Yes"
 },
 "albumname": "Keys To Ascension (Disc 1)",
 "songs": [
