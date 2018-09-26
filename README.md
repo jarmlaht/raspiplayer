@@ -7,6 +7,9 @@ Returns the band names (folder names) in array as response
 GET /bandfolders/:bandId
 Returns the albums of the band as string array
 
+GET /bandfolders/:bandId/:albumId
+Returns the songs (file names) of the album of the band as string array
+
 GET /albums
 Returns all the album data in JSON format as response
 
