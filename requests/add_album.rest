@@ -8,7 +8,10 @@ content-type: application/json
     "id": 3,
     "name": "Yes"
 },
-"albumname": "Keys To Ascension (Disc 1)",
+"album": {
+    "id": 4,
+    "name": "Keys To Ascension (Disc 1)"
+},
 "songs": [
 {
 "id": 1,

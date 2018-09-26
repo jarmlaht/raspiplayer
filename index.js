@@ -11,7 +11,10 @@ let albums = [{
             id: 1,
             name: 'Pendragon',
         },
-        albumname: 'Pure',
+        album: {
+            id: 1,
+            name: 'Pure',
+        },
         songs: [{
                 id: 1,
                 filename: '01-Indigo.flac'
@@ -48,7 +51,10 @@ let albums = [{
             id: 2,
             name: 'Transatlantic',
         },
-        albumname: 'SMPTe',
+        album: {
+            id: 2,
+            name: 'SMPTe',
+        },
         songs: [{
                 id: 1,
                 filename: '01-All Of The Above.flac'
@@ -77,7 +83,10 @@ let albums = [{
             id: 2,
             name: 'Transatlantic',
         },
-        albumname: 'Bridge Across Forever',
+        album: {
+            id: 3,
+            name: 'Bridge Across Forever',
+        },
         songs: [{
                 id: 1,
                 filename: '01-Duel With The Devil.flac'
@@ -99,7 +108,11 @@ let albums = [{
 ]
 
 app.get('/', (request, response) => {
-    response.send('<h1>Hello World!</h1>')
+    response.send('<h1>Routes:</h1><b>GET /bandfolders</b><p>Returns the band names (folder names) in array as response</p><b>GET /bandfolders/:bandId</b>' +
+        '<p>Returns the albums of the band as string array</p><b>GET /albums</b><p>Returns all the album data in JSON format as response</p>' +
+        '<b>GET /bands</b><p>Returns all unique band names as string array</p><b>GET /albums/:id</b><p>Returns album data based on id in JSON format</p>' +
+        '<b>GET /albums/:id/songs/</b><p>Returns songs of the album as object array (id, filename)</p><b>GET /albums/:id/songs/:songId</b>' +
+        '<p>Returns the file name of the song based on album id and song id</p><b>POST /albums</b><p>Adds a new album to the list</p>')
 })
 
 /* ROUTES FOR THE NETWORK DRIVE */
@@ -108,7 +121,7 @@ app.get('/bandfolders', (request, response) => {
     fs.readdir('\\\\192.168.1.5\\share\\FLAC\\', { 'withFileTypes': true }, (error, files) => {
         if (error) {
             console.log(error)
-            return response.status(400).json({ error: error })
+            return response.status(400).json({ error: error }).end()
         } else if (files) {
             response.json(files)
         }
@@ -123,12 +136,32 @@ app.get('/bandfolders/:bandId', (request, response) => {
         fs.readdir('\\\\192.168.1.5\\share\\FLAC\\' + band.band.name, { 'withFileTypes': true }, (error, files) => {
             if (error) {
                 console.log(error)
-                return response.status(400).json({ error: error })
+                return response.status(400).json({ error: error }).end()
             } else if (files) {
                 response.json(files)
             }
         })
     } else return response.status(400).json({ error: 'Band with given id not found!' })
+})
+
+// Returns the songs (file names) of the album of the band as string array
+app.get('/bandfolders/:bandId/:albumId', (request, response) => {
+    const bandId = Number(request.params.bandId)
+    const albumId = Number(request.params.albumId)
+    const band = albums.find(album => album.band.id === bandId)
+    const album = albums.find(album => album.album.id === albumId)
+    if (band && album) {
+        console.log('band:', band.name, 'album:', album.name)
+        fs.readdir('\\\\192.168.1.5\\share\\FLAC\\' + band.band.name + '\\' + album.album.name, { 'withFileTypes': true }, (error, files) => {
+            if (error) {
+                console.log('ERROR:', error)
+                return response.status(400).json({ error: error }).end()
+            } else if (files) {
+                console.log('ding!')
+                response.json(files)
+            }
+        })
+    } else return response.status(400).json({ error: 'Album with given id not found!' })
 })
 
 /* ROUTES FOR THE LOCAL ALBUM ARRAY */
@@ -178,7 +211,7 @@ app.get('/albums/:id/songs/:songId', (request, response) => {
     if (album) {
         const song = album.songs.find(song => song.id === songId)
         if (song) response.end(song.filename)
-        else response.status(400).json({ error: 'Song with given id not found' })
+        else response.status(400).json({ error: 'Song with given id not found' }).end()
     } else {
         response.status(404).end()
     }
@@ -197,7 +230,7 @@ app.post('/albums', (request, response) => {
     const album = {
         id: body.id,
         band: { id: body.band.id, name: body.band.name },
-        albumname: body.albumname,
+        album: { name: body.album.name, id: body.album.id },
         songs: body.songs
     }
     console.log(album)
