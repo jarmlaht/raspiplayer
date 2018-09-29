@@ -3,62 +3,56 @@ const app = express()
 const bodyParser = require('body-parser')
 const fs = require('fs');
 
-const root = '\\\\192.168.1.5\\share\\FLAC\\';
-
 app.use(bodyParser.json())
 
-app.get('/', (request, response) => {
-    response.send('<h1>Routes:</h1><b>GET /contents</b><p>Returns the whole contents of the music library</p>' +
-        '<b>GET /bandfolders</b><p>Returns the band names (folder names) in array as response</p><b>GET /bandfolders/:bandId</b>' +
-        '<p>Returns the albums of the band as string array</p><b>GET /albums</b><p>Returns all the album data in JSON format as response</p>' +
-        '<b>GET /bands</b><p>Returns all the unique band names as string array</p><b>GET /albums/:id</b><p>Returns album data based on id in JSON format</p>' +
-        '<b>GET /albums/:id/songs/</b><p>Returns songs of the album as object array (id, filename)</p><b>GET /albums/:id/songs/:songId</b>' +
-        '<p>Returns the file name of the song based on album id and song id</p><b>POST /albums</b><p>Adds a new album to the list</p>')
-})
+const root = '\\\\192.168.1.5\\share\\FLAC\\';
+const contents = getContents();
 
-/* ROUTES FOR THE NETWORK DRIVE */
-// Returns the band names (folder names) in array as response
-app.get('/contents', (request, response) => {
+function getContents() {
     let contents = {};
     let bandFolders = [];
     let bands = {};
     let bandAlbumFolders = [];
-    let bandAlbums = {};
-    let bandAlbumSongs = [];
 
     bandFolders = fs.readdirSync(root, { 'withFileTypes': true })
-        //console.log('bandFolders:', bandFolders)
     bands = bandFolders.map((folder, index) => {
-            return { bandId: index, bandName: folder }
-        })
-        //console.log('bands:', bands)
-    contents = bands // bands added
+        return { bandId: index, bandName: folder }
+    })
+    contents = bands
 
     bandFolders.forEach(band => {
         const albums = fs.readdirSync(root + '/' + band, { 'withFileTypes': true })
         bandAlbumFolders.push(albums)
     })
 
-    //console.log('bandAlbumFolders:', bandAlbumFolders);
-
     bandAlbumFolders.forEach((folders, bandIndex) => {
         const albums = folders.map((folder, albumIndex) => {
             const songs = fs.readdirSync(root + '/' + bandFolders[bandIndex] + '/' + folder, { 'withFileTypes': true })
-                //console.log('songs', songs)
             const albumSongs = songs.map((song, index) => {
                 return { songId: index, songName: song }
             })
             return { albumId: albumIndex, albumName: folder, songs: albumSongs }
         })
-        console.log('albums:', albums)
-
         contents[bandIndex].albums = albums
     })
 
+    return contents
+}
+
+app.get('/', (request, response) => {
+    response.send('<h1>Routes:</h1><b>GET /contents</b><p>Returns the whole contents of the music library</p>' +
+        '<b>GET /bands</b><p>Returns the band names (folder names) as string array</p>' +
+        '<b>GET /albums/:bandId</b><p>Returns the albums of the band as string array</p>' +
+        '<b>GET /band/:bandId/albumId</b><p>Returns the songs (file names) of the album of the band as string array</p>')
+})
+
+/* ROUTES FOR THE NETWORK DRIVE */
+// Returns the band names (folder names) in array as response
+app.get('/contents', (request, response) => {
     response.json(contents);
 })
 
-app.get('/bandfolders', (request, response) => {
+app.get('/bands', (request, response) => {
     fs.readdir('\\\\192.168.1.5\\share\\FLAC\\', { 'withFileTypes': true }, (error, files) => {
         if (error) {
             console.log(error)
@@ -70,11 +64,12 @@ app.get('/bandfolders', (request, response) => {
 })
 
 // Returns the albums of the band as string array
-app.get('/bandfolders/:bandId', (request, response) => {
+app.get('/albums/:bandId', (request, response) => {
     const bandId = Number(request.params.bandId)
-    const band = albums.find(album => album.band.id === bandId)
+    const band = contents[bandId].bandName
+    console.log(band)
     if (band) {
-        fs.readdir('\\\\192.168.1.5\\share\\FLAC\\' + band.band.name, { 'withFileTypes': true }, (error, files) => {
+        fs.readdir('\\\\192.168.1.5\\share\\FLAC\\' + band, { 'withFileTypes': true }, (error, files) => {
             if (error) {
                 console.log(error)
                 return response.status(400).json({ error: error }).end()
@@ -86,39 +81,41 @@ app.get('/bandfolders/:bandId', (request, response) => {
 })
 
 // Returns the songs (file names) of the album of the band as string array
-app.get('/bandfolders/:bandId/:albumId', (request, response) => {
+app.get('/band/:bandId/:albumId', (request, response) => {
     const bandId = Number(request.params.bandId)
     const albumId = Number(request.params.albumId)
-    const band = albums.find(album => album.band.id === bandId)
-    const album = albums.find(album => album.album.id === albumId)
-    if (band && album) {
-        console.log('band:', band.name, 'album:', album.name)
-        fs.readdir('\\\\192.168.1.5\\share\\FLAC\\' + band.band.name + '\\' + album.album.name, { 'withFileTypes': true }, (error, files) => {
-            if (error) {
-                console.log('ERROR:', error)
-                return response.status(400).json({ error: error }).end()
-            } else if (files) {
-                console.log('ding!')
-                response.json(files)
-            }
-        })
-    } else return response.status(400).json({ error: 'Album with given id not found!' })
+    let band = undefined
+    let album = undefined
+    if (contents[bandId]) {
+        band = contents[bandId].bandName
+        if (contents[bandId].albums[albumId]) {
+            album = contents[bandId].albums[albumId].albumName
+        } else response.status(400).json({ error: `Album with albumId ${albumId} not found!` }).end()
+    } else {
+        return response.status(400).json({ error: `Band with bandId ${bandId} not found!` }).end()
+    }
+    console.log('band:', band, 'album:', album)
+    fs.readdir('\\\\192.168.1.5\\share\\FLAC\\' + band + '\\' + album, { 'withFileTypes': true }, (error, files) => {
+        if (error) {
+            console.log('ERROR:', error)
+            return response.status(400).json({ error: error }).end()
+        } else if (files) {
+            response.json(files)
+        }
+    })
 })
 
-/* ROUTES FOR THE LOCAL ALBUM ARRAY */
+/* ROUTES FOR THE LOCAL ALBUM ARRAY
 // Returns all the album data in JSON format as response
 app.get('/albums', (request, response) => {
-    response.json(albums)
+    response.json(contents)
 })
 
 // Returns all unique band names as string array
 app.get('/bands', (request, response) => {
+    const contents = getContents()
     let bands = []
-    albums.forEach(album => bands.push(album.band.name))
-    const uniqueBands = bands.filter((item, pos) => {
-        console.log(item, pos)
-        return bands.indexOf(item) == pos
-    })
+    contents.forEach(band => bands.push(band.bandName))
     response.json(uniqueBands)
 })
 
@@ -177,122 +174,9 @@ app.post('/albums', (request, response) => {
     console.log(album)
     albums = albums.concat(album)
     response.json(album)
-})
+})*/
 
 const PORT = 3001
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
-
-const readBandFolders = (folder) => {
-    fs.readdir(folder, { 'withFileTypes': true }, (error, files) => {
-        if (error) {
-            console.log(error)
-        } else if (files) {
-            console.log('files', files);
-            return files
-        }
-    })
-};
-
-let albums = [{
-        id: 1,
-        band: {
-            id: 1,
-            name: 'Pendragon',
-        },
-        album: {
-            id: 1,
-            name: 'Pure',
-        },
-        songs: [{
-                id: 1,
-                filename: '01-Indigo.flac'
-            },
-            {
-                id: 2,
-                filename: '02-Eraserhead.flac'
-            },
-            {
-                id: 3,
-                filename: '03-Comatose I- View From the Seashore.flac'
-            },
-            {
-                id: 4,
-                filename: '04-Comatose II- Space Cadet.flac'
-            },
-            {
-                id: 5,
-                filename: '05-Comatose III- Home and Dry.flac'
-            },
-            {
-                id: 6,
-                filename: '06-The Freak Show.flac'
-            },
-            {
-                id: 7,
-                filename: '07-It\'s Only Me.flac'
-            },
-        ]
-    },
-    {
-        id: 2,
-        band: {
-            id: 2,
-            name: 'Transatlantic',
-        },
-        album: {
-            id: 2,
-            name: 'SMPTe',
-        },
-        songs: [{
-                id: 1,
-                filename: '01-All Of The Above.flac'
-            },
-            {
-                id: 2,
-                filename: '02-We All Need Some Light.flac'
-            },
-            {
-                id: 3,
-                filename: '03-Mystery Train.flac'
-            },
-            {
-                id: 4,
-                filename: '04-My New World.flac'
-            },
-            {
-                id: 5,
-                filename: '05-In Held (Twas) In I.flac'
-            },
-        ]
-    },
-    {
-        id: 3,
-        band: {
-            id: 2,
-            name: 'Transatlantic',
-        },
-        album: {
-            id: 3,
-            name: 'Bridge Across Forever',
-        },
-        songs: [{
-                id: 1,
-                filename: '01-Duel With The Devil.flac'
-            },
-            {
-                id: 2,
-                filename: '02-Suite Charlotte Pike.flac'
-            },
-            {
-                id: 3,
-                filename: '03-Bridge Across Forever.flac'
-            },
-            {
-                id: 4,
-                filename: '04-Stranger In Your Soul.flac'
-            },
-        ]
-    },
-]
