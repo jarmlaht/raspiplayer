@@ -3,109 +3,9 @@ const app = express()
 const bodyParser = require('body-parser')
 const fs = require('fs');
 
-app.use(bodyParser.json())
+const root = '\\\\192.168.1.5\\share\\FLAC\\';
 
-let albums = [{
-        id: 1,
-        band: {
-            id: 1,
-            name: 'Pendragon',
-        },
-        album: {
-            id: 1,
-            name: 'Pure',
-        },
-        songs: [{
-                id: 1,
-                filename: '01-Indigo.flac'
-            },
-            {
-                id: 2,
-                filename: '02-Eraserhead.flac'
-            },
-            {
-                id: 3,
-                filename: '03-Comatose I- View From the Seashore.flac'
-            },
-            {
-                id: 4,
-                filename: '04-Comatose II- Space Cadet.flac'
-            },
-            {
-                id: 5,
-                filename: '05-Comatose III- Home and Dry.flac'
-            },
-            {
-                id: 6,
-                filename: '06-The Freak Show.flac'
-            },
-            {
-                id: 7,
-                filename: '07-It\'s Only Me.flac'
-            },
-        ]
-    },
-    {
-        id: 2,
-        band: {
-            id: 2,
-            name: 'Transatlantic',
-        },
-        album: {
-            id: 2,
-            name: 'SMPTe',
-        },
-        songs: [{
-                id: 1,
-                filename: '01-All Of The Above.flac'
-            },
-            {
-                id: 2,
-                filename: '02-We All Need Some Light.flac'
-            },
-            {
-                id: 3,
-                filename: '03-Mystery Train.flac'
-            },
-            {
-                id: 4,
-                filename: '04-My New World.flac'
-            },
-            {
-                id: 5,
-                filename: '05-In Held (Twas) In I.flac'
-            },
-        ]
-    },
-    {
-        id: 3,
-        band: {
-            id: 2,
-            name: 'Transatlantic',
-        },
-        album: {
-            id: 3,
-            name: 'Bridge Across Forever',
-        },
-        songs: [{
-                id: 1,
-                filename: '01-Duel With The Devil.flac'
-            },
-            {
-                id: 2,
-                filename: '02-Suite Charlotte Pike.flac'
-            },
-            {
-                id: 3,
-                filename: '03-Bridge Across Forever.flac'
-            },
-            {
-                id: 4,
-                filename: '04-Stranger In Your Soul.flac'
-            },
-        ]
-    },
-]
+app.use(bodyParser.json())
 
 app.get('/', (request, response) => {
     response.send('<h1>Routes:</h1><b>GET /bandfolders</b><p>Returns the band names (folder names) in array as response</p><b>GET /bandfolders/:bandId</b>' +
@@ -117,6 +17,43 @@ app.get('/', (request, response) => {
 
 /* ROUTES FOR THE NETWORK DRIVE */
 // Returns the band names (folder names) in array as response
+app.get('/all', (request, response) => {
+    let bandFolders = [];
+    let bandAlbumFolders = [];
+    let bandAlbumSongs = [];
+
+    bandFolders = fs.readdirSync(root, { 'withFileTypes': true })
+    console.log(bandFolders)
+
+    // Get band folder names
+    /*new Promise(function(resolve, reject) {
+            fs.readdir(folder, { 'withFileTypes': true }, (error, files) => {
+                if (error) {
+                    reject(error)
+                } else if (files) {
+                    console.log('files', files);
+                    resolve(files)
+                }
+            })
+        }).then((files) => {
+            files.forEach((file, index) => {
+                console.log('#' + index, file)
+                bandFolders.push({ bandId: index, bandName: file })
+            })
+            console.log('bandFolders', bandFolders)
+            resolve(bandFolders)
+        }).then((bandFolders) => {
+            const bandFoldersWithAlbums = bandFolders.map(bandFolder => {
+                fs.readdir()
+            })
+        })*/
+
+    //readBandFolders(folder).then(console.log(results), console.log(error));
+
+    //
+    response.json(bandFolders);
+})
+
 app.get('/bandfolders', (request, response) => {
     fs.readdir('\\\\192.168.1.5\\share\\FLAC\\', { 'withFileTypes': true }, (error, files) => {
         if (error) {
@@ -242,3 +179,116 @@ const PORT = 3001
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
+
+const readBandFolders = (folder) => {
+    fs.readdir(folder, { 'withFileTypes': true }, (error, files) => {
+        if (error) {
+            console.log(error)
+        } else if (files) {
+            console.log('files', files);
+            return files
+        }
+    })
+};
+
+let albums = [{
+        id: 1,
+        band: {
+            id: 1,
+            name: 'Pendragon',
+        },
+        album: {
+            id: 1,
+            name: 'Pure',
+        },
+        songs: [{
+                id: 1,
+                filename: '01-Indigo.flac'
+            },
+            {
+                id: 2,
+                filename: '02-Eraserhead.flac'
+            },
+            {
+                id: 3,
+                filename: '03-Comatose I- View From the Seashore.flac'
+            },
+            {
+                id: 4,
+                filename: '04-Comatose II- Space Cadet.flac'
+            },
+            {
+                id: 5,
+                filename: '05-Comatose III- Home and Dry.flac'
+            },
+            {
+                id: 6,
+                filename: '06-The Freak Show.flac'
+            },
+            {
+                id: 7,
+                filename: '07-It\'s Only Me.flac'
+            },
+        ]
+    },
+    {
+        id: 2,
+        band: {
+            id: 2,
+            name: 'Transatlantic',
+        },
+        album: {
+            id: 2,
+            name: 'SMPTe',
+        },
+        songs: [{
+                id: 1,
+                filename: '01-All Of The Above.flac'
+            },
+            {
+                id: 2,
+                filename: '02-We All Need Some Light.flac'
+            },
+            {
+                id: 3,
+                filename: '03-Mystery Train.flac'
+            },
+            {
+                id: 4,
+                filename: '04-My New World.flac'
+            },
+            {
+                id: 5,
+                filename: '05-In Held (Twas) In I.flac'
+            },
+        ]
+    },
+    {
+        id: 3,
+        band: {
+            id: 2,
+            name: 'Transatlantic',
+        },
+        album: {
+            id: 3,
+            name: 'Bridge Across Forever',
+        },
+        songs: [{
+                id: 1,
+                filename: '01-Duel With The Devil.flac'
+            },
+            {
+                id: 2,
+                filename: '02-Suite Charlotte Pike.flac'
+            },
+            {
+                id: 3,
+                filename: '03-Bridge Across Forever.flac'
+            },
+            {
+                id: 4,
+                filename: '04-Stranger In Your Soul.flac'
+            },
+        ]
+    },
+]
