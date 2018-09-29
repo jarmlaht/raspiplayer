@@ -8,50 +8,54 @@ const root = '\\\\192.168.1.5\\share\\FLAC\\';
 app.use(bodyParser.json())
 
 app.get('/', (request, response) => {
-    response.send('<h1>Routes:</h1><b>GET /bandfolders</b><p>Returns the band names (folder names) in array as response</p><b>GET /bandfolders/:bandId</b>' +
+    response.send('<h1>Routes:</h1><b>GET /contents</b><p>Returns the whole contents of the music library</p>' +
+        '<b>GET /bandfolders</b><p>Returns the band names (folder names) in array as response</p><b>GET /bandfolders/:bandId</b>' +
         '<p>Returns the albums of the band as string array</p><b>GET /albums</b><p>Returns all the album data in JSON format as response</p>' +
-        '<b>GET /bands</b><p>Returns all unique band names as string array</p><b>GET /albums/:id</b><p>Returns album data based on id in JSON format</p>' +
+        '<b>GET /bands</b><p>Returns all the unique band names as string array</p><b>GET /albums/:id</b><p>Returns album data based on id in JSON format</p>' +
         '<b>GET /albums/:id/songs/</b><p>Returns songs of the album as object array (id, filename)</p><b>GET /albums/:id/songs/:songId</b>' +
         '<p>Returns the file name of the song based on album id and song id</p><b>POST /albums</b><p>Adds a new album to the list</p>')
 })
 
 /* ROUTES FOR THE NETWORK DRIVE */
 // Returns the band names (folder names) in array as response
-app.get('/all', (request, response) => {
+app.get('/contents', (request, response) => {
+    let contents = {};
     let bandFolders = [];
+    let bands = {};
     let bandAlbumFolders = [];
+    let bandAlbums = {};
     let bandAlbumSongs = [];
 
     bandFolders = fs.readdirSync(root, { 'withFileTypes': true })
-    console.log(bandFolders)
+        //console.log('bandFolders:', bandFolders)
+    bands = bandFolders.map((folder, index) => {
+            return { bandId: index, bandName: folder }
+        })
+        //console.log('bands:', bands)
+    contents = bands // bands added
 
-    // Get band folder names
-    /*new Promise(function(resolve, reject) {
-            fs.readdir(folder, { 'withFileTypes': true }, (error, files) => {
-                if (error) {
-                    reject(error)
-                } else if (files) {
-                    console.log('files', files);
-                    resolve(files)
-                }
-            })
-        }).then((files) => {
-            files.forEach((file, index) => {
-                console.log('#' + index, file)
-                bandFolders.push({ bandId: index, bandName: file })
-            })
-            console.log('bandFolders', bandFolders)
-            resolve(bandFolders)
-        }).then((bandFolders) => {
-            const bandFoldersWithAlbums = bandFolders.map(bandFolder => {
-                fs.readdir()
-            })
-        })*/
+    bandFolders.forEach(band => {
+        const albums = fs.readdirSync(root + '/' + band, { 'withFileTypes': true })
+        bandAlbumFolders.push(albums)
+    })
 
-    //readBandFolders(folder).then(console.log(results), console.log(error));
+    //console.log('bandAlbumFolders:', bandAlbumFolders);
 
-    //
-    response.json(bandFolders);
+    bandAlbumFolders.forEach((folders, bandIndex) => {
+        const albums = folders.map((folder, albumIndex) => {
+            const songs = fs.readdirSync(root + '/' + bandFolders[bandIndex] + '/' + folder, { 'withFileTypes': true })
+                //console.log('songs', songs)
+            const albumSongs = songs.map((song, index) => {
+                return { songId: index, songName: song }
+            })
+            return { albumId: albumIndex, albumName: folder, songs: albumSongs }
+        })
+        console.log('albums:', albums)
+
+        contents[bandIndex].albums = albums
+    })
+
+    response.json(contents);
 })
 
 app.get('/bandfolders', (request, response) => {
