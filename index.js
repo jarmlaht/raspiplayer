@@ -40,8 +40,8 @@ function getContents() {
 }
 
 app.get('/', (request, response) => {
-    response.send('<h1>Routes:</h1><b>GET /contents</b><p>Returns the whole contents of the music library</p>' +
-        '<b>GET /bands</b><p>Returns the band names (folder names) as string array</p>' +
+    response.send('<h1>Routes:</h1><a href="/contents"><b>GET /contents</b></a><p>Returns the whole contents of the music library</p>' +
+        '<a href="/bands"><b>GET /bands</b></a><p>Returns the band names (folder names) as string array</p>' +
         '<b>GET /albums/:bandId</b><p>Returns the albums of the band as string array</p>' +
         '<b>GET /band/:bandId/albumId</b><p>Returns the songs (file names) of the album of the band as string array</p>')
 })
