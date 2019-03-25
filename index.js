@@ -5,7 +5,7 @@ const fs = require('fs');
 
 app.use(bodyParser.json())
 
-const root = '\\\\192.168.1.5\\share\\FLAC\\';
+const root = '\\\\192.168.1.15\\share\\FLAC\\';
 const contents = getContents();
 
 function getContents() {
@@ -14,29 +14,33 @@ function getContents() {
     let bands = {};
     let bandAlbumFolders = [];
 
-    bandFolders = fs.readdirSync(root, { 'withFileTypes': true })
-    bands = bandFolders.map((folder, index) => {
-        return { bandId: index, bandName: folder }
-    })
-    contents = bands
-
-    bandFolders.forEach(band => {
-        const albums = fs.readdirSync(root + '/' + band, { 'withFileTypes': true })
-        bandAlbumFolders.push(albums)
-    })
-
-    bandAlbumFolders.forEach((folders, bandIndex) => {
-        const albums = folders.map((folder, albumIndex) => {
-            const songs = fs.readdirSync(root + '/' + bandFolders[bandIndex] + '/' + folder, { 'withFileTypes': true })
-            const albumSongs = songs.map((song, index) => {
-                return { songId: index, songName: song }
-            })
-            return { albumId: albumIndex, albumName: folder, songs: albumSongs }
+    try {
+        bandFolders = fs.readdirSync(root, { 'withFileTypes': true })
+        bands = bandFolders.map((folder, index) => {
+            return { bandId: index, bandName: folder }
         })
-        contents[bandIndex].albums = albums
-    })
+        contents = bands
 
-    return contents
+        bandFolders.forEach(band => {
+            const albums = fs.readdirSync(root + '/' + band, { 'withFileTypes': true })
+            bandAlbumFolders.push(albums)
+        })
+
+        bandAlbumFolders.forEach((folders, bandIndex) => {
+            const albums = folders.map((folder, albumIndex) => {
+                const songs = fs.readdirSync(root + '/' + bandFolders[bandIndex] + '/' + folder, { 'withFileTypes': true })
+                const albumSongs = songs.map((song, index) => {
+                    return { songId: index, songName: song }
+                })
+                return { albumId: albumIndex, albumName: folder, songs: albumSongs }
+            })
+            contents[bandIndex].albums = albums
+        })
+
+        return contents
+    } catch (err) {
+        console.log('ERROR:', err)
+    }
 }
 
 app.get('/', (request, response) => {
@@ -53,7 +57,7 @@ app.get('/contents', (request, response) => {
 })
 
 app.get('/bands', (request, response) => {
-    fs.readdir('\\\\192.168.1.5\\share\\FLAC\\', { 'withFileTypes': true }, (error, files) => {
+    fs.readdir(root, { 'withFileTypes': true }, (error, files) => {
         if (error) {
             console.log(error)
             return response.status(400).json({ error: error }).end()
@@ -69,7 +73,7 @@ app.get('/albums/:bandId', (request, response) => {
     const band = contents[bandId].bandName
     console.log(band)
     if (band) {
-        fs.readdir('\\\\192.168.1.5\\share\\FLAC\\' + band, { 'withFileTypes': true }, (error, files) => {
+        fs.readdir(root + band, { 'withFileTypes': true }, (error, files) => {
             if (error) {
                 console.log(error)
                 return response.status(400).json({ error: error }).end()
@@ -95,7 +99,7 @@ app.get('/band/:bandId/:albumId', (request, response) => {
         return response.status(400).json({ error: `Band with bandId ${bandId} not found!` }).end()
     }
     console.log('band:', band, 'album:', album)
-    fs.readdir('\\\\192.168.1.5\\share\\FLAC\\' + band + '\\' + album, { 'withFileTypes': true }, (error, files) => {
+    fs.readdir(root + band + '\\' + album, { 'withFileTypes': true }, (error, files) => {
         if (error) {
             console.log('ERROR:', error)
             return response.status(400).json({ error: error }).end()
