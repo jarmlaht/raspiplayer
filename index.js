@@ -1,9 +1,11 @@
-const express = require('express')
-const app = express()
-const bodyParser = require('body-parser')
+const express = require('express');
+const app = express();
+const bodyParser = require('body-parser');
 const fs = require('fs');
+const cors = require('cors');
 
-app.use(bodyParser.json())
+app.use(cors());
+app.use(bodyParser.json());
 
 const root = '\\\\192.168.1.15\\share\\FLAC\\';
 const contents = getContents();
@@ -48,6 +50,11 @@ app.get('/', (request, response) => {
         '<a href="/bands"><b>GET /bands</b></a><p>Returns the band names (folder names) as string array</p>' +
         '<b>GET /albums/:bandId</b><p>Returns the albums of the band as string array</p>' +
         '<b>GET /band/:bandId/albumId</b><p>Returns the songs (file names) of the album of the band as string array</p>')
+})
+
+app.get('/update', (request, response) => {
+    getContents();
+    response.json(contents);
 })
 
 /* ROUTES FOR THE NETWORK DRIVE */
